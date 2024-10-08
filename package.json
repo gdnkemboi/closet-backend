@@ -1,0 +1,15 @@
+{
+  "name": "closet-backend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node --watch ./bin/www",
+    "dev": "DEBUG=closet-backend:* npm start"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "express": "^4.21.0",
+    "morgan": "~1.9.1"
+  }
+}
