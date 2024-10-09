@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String?  @unique // Optional for phone-based signups
+  phoneNumber String?  @unique // Optional for email-based signups
+  password    String? // Optional for social login users
+  googleId    String?  @unique // Google ID for Gmail-based login
+  firstName   String
+  lastName    String
+  role        Role     @default(USER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders Order[] // Relation to Order
+  carts  Cart[] // Relation to Cart
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Category {
+  id            String     @id @default(uuid())
+  name          String     @unique
+  parentId      String? // Optional for subcategories
+  parent        Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  subcategories Category[] @relation("CategoryHierarchy")
+  products      Product[] // A category can have multiple products
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  categoryId  String // Foreign key to Category
+  category    Category @relation(fields: [categoryId], references: [id])
+  gender      Gender // Enum to represent gender
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderProducts OrderProduct[] // Relation to OrderProduct
+  cartItems     CartItem[] // Relation to CartItem
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  UNISEX
+}
+
+model Order {
+  id         String         @id @default(uuid())
+  user       User           @relation(fields: [userId], references: [id])
+  userId     String
+  products   OrderProduct[]
+  totalPrice Float
+  status     OrderStatus    @default(PENDING)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  payments Payment[] // Relation to Payment
+}
+
+model OrderProduct {
+  id        String  @id @default(uuid())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+}
+
+enum OrderStatus {
+  PENDING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String  @id @default(uuid())
+  cart      Cart    @relation(fields: [cartId], references: [id])
+  cartId    String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  order       Order         @relation(fields: [orderId], references: [id])
+  orderId     String // Change to String to match the Order model
+  amount      Float
+  mpesaCode   String        @unique
+  phoneNumber String
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model Analytics {
+  id           String   @id @default(uuid())
+  totalSales   Float    @default(0.0)
+  totalUsers   Int      @default(0)
+  totalOrders  Int      @default(0)
+  totalRevenue Float    @default(0.0)
+  lastUpdated  DateTime @default(now()) @updatedAt
+}
